@@ -1,6 +1,6 @@
-#Amazon Image Scraper
+# Amazon Image Scraper
 
-##To use:
+## To use:
 
 > npm i
 
