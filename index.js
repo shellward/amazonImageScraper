@@ -9,18 +9,21 @@ const term = process.argv[2] ?? 'shoes';
 const numberOfPages = process.argv[3] ?? 1,
     batchName = process.argv[4] ?? term;
 
-console.log(process.argv)
+// REQUEST OPTS
+let options = {
+    method: 'GET',
+    url: `https://www.amazon.com/s?k=${term}${numberOfPages > 1 ? '&page=' + numberOfPages : ''}`,
+    gzip: true,
+    headers:
+        { "User-Agent": "Chrome /70.0.3538.77" }
+}
+
 // LOOP THROUGH PAGES WORTH OF RESULTS
-for (pageNum = 1; pageNum < numberOfPages + 1; pageNum++) {
+for (pageNum = 1; pageNum < parseInt(numberOfPages) + 1; pageNum++) {
+
 
     //REQUEST
-    request({
-        method: 'GET',
-        url: `https://www.amazon.com/s?k=${term}&page=${pageNum}`,
-        gzip: true,
-        headers:
-            { "User-Agent": "Chrome /70.0.3538.77" }
-    },
+    request(options,
         (err, res, body) => {
             // ERR THROW ERR
             if (err) return console.error(err);
@@ -28,14 +31,18 @@ for (pageNum = 1; pageNum < numberOfPages + 1; pageNum++) {
             let $ = cheerio.load(body);
 
             // GRAB IMAGES
-            ($('div.a-section.a-spacing-none.s-image-overlay-black > div > span > a > div img').each(function (i, e) {
-                //SET URL AND DEST
+            ($('a > div img').each((i, e) => {
+
+                // GUARD CLAUSE AGAINST TINY IMGS
+                if (e.attribs.height < 2 &&
+                    e.attribs.width < 2) { return }
+
+                // SET URL AND DEST
                 options = {
                     url: `${e.attribs.src.replace('_AC_UL320_', '_AC_UL1280_')}`,
                     dest: `batch/${batchName}/${pageNum}_${i}.jpg`
                 }
 
-                console.log(options)
                 // CREATE IF NOT EXISTS BATCH DIR
                 if (!fs.existsSync(`batch`)) {
                     fs.mkdirSync(`batch`);
